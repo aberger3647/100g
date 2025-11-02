@@ -105,6 +105,8 @@ export default function HomeScreen() {
       {!scanned ? (
         <CameraView
           onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+          onCameraReady={() => console.log('Camera ready')}
+          onMountError={(error) => console.log('Camera mount error:', error)}
           barcodeScannerSettings={{
             barcodeTypes: [
               "aztec",
