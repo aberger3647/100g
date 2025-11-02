@@ -112,8 +112,16 @@ Scan another item?`,
     }
   };
 
-  const renderItem = ({ item }: { item: Product }) => (
+  const renderItem = ({ item, index }: { item: Product; index: number }) => (
     <ThemedView style={styles.item}>
+      <TouchableOpacity
+        style={styles.removeButton}
+        onPress={() => {
+          setScannedItems((prev) => prev.filter((_, i) => i !== index));
+        }}
+      >
+        <ThemedText style={styles.removeText}>×</ThemedText>
+      </TouchableOpacity>
       <ThemedText type="subtitle">{item.product_name}</ThemedText>
       <ThemedText>Protein: {item.macros.protein}g</ThemedText>
       <ThemedText>Carbs: {item.macros.carbohydrates}g</ThemedText>
@@ -181,19 +189,27 @@ Scan another item?`,
       ) : (
         <View style={styles.scannedContainer}>
           <ThemedText type="title" style={styles.title}>Scanned Items</ThemedText>
-          <FlatList
-            data={scannedItems}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.barcode}
-            numColumns={2}
-            style={styles.list}
-          />
+          {scannedItems.length === 0 ? (
+            <ThemedView style={styles.emptyContainer}>
+              <ThemedText style={styles.emptyText}>Scan an item to begin comparing</ThemedText>
+            </ThemedView>
+          ) : (
+            <FlatList
+              data={scannedItems}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.barcode}
+              numColumns={2}
+              style={styles.list}
+            />
+          )}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.button}
               onPress={() => { setIsScanning(true); isProcessing.current = false; }}
             >
-              <ThemedText>Scan Another Item</ThemedText>
+              <ThemedText style={styles.buttonText}>
+                {scannedItems.length === 0 ? "Scan an item" : "Scan another item"}
+              </ThemedText>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.button}
@@ -204,7 +220,7 @@ Scan another item?`,
                 isProcessing.current = false;
               }}
             >
-              <ThemedText>New Comparison</ThemedText>
+              <ThemedText style={styles.buttonText}>New Comparison</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -241,6 +257,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 5,
   },
+  buttonText: {
+    color: "white",
+  },
   cameraContainer: {
     flex: 1,
   },
@@ -264,5 +283,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginTop: 20,
+  },
+  removeButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+  },
+  removeText: {
+    color: "#FF3B30",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
   },
 });
