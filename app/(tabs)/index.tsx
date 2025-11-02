@@ -1,13 +1,13 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Camera, CameraView } from "expo-camera";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+Alert,
+FlatList,
+StyleSheet,
+TouchableOpacity,
+View,
 } from "react-native";
 
 interface Product {
@@ -25,6 +25,7 @@ export default function HomeScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
   const [scannedItems, setScannedItems] = useState<Product[]>([]);
+  const cameraRef = useRef<CameraView>(null);
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -104,8 +105,15 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       {!scanned ? (
         <CameraView
+          ref={cameraRef}
           onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-          onCameraReady={() => console.log('Camera ready')}
+          onCameraReady={() => {
+            console.log('Camera ready');
+            if (cameraRef.current) {
+              const features = cameraRef.current.getSupportedFeatures();
+              console.log('Supported features:', features);
+            }
+          }}
           onMountError={(error) => console.log('Camera mount error:', error)}
           barcodeScannerSettings={{
             barcodeTypes: [
