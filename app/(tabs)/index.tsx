@@ -113,21 +113,28 @@ Scan another item?`,
   };
 
   const renderItem = ({ item, index }: { item: Product; index: number }) => (
-    <ThemedView style={styles.item}>
+    <View style={styles.tableRow}>
+      <ThemedText style={[styles.tableCell, styles.itemColumn]} numberOfLines={2}>
+        {item.product_name}
+      </ThemedText>
+      <ThemedText style={[styles.tableCell, styles.nutritionColumn]}>
+        {Math.floor(item.macros.carbohydrates)}
+      </ThemedText>
+      <ThemedText style={[styles.tableCell, styles.nutritionColumn]}>
+        {Math.floor(item.macros.fat)}
+      </ThemedText>
+      <ThemedText style={[styles.tableCell, styles.nutritionColumn]}>
+        {Math.floor(item.macros.protein)}
+      </ThemedText>
       <TouchableOpacity
-        style={styles.removeButton}
+        style={styles.tableRemoveButton}
         onPress={() => {
           setScannedItems((prev) => prev.filter((_, i) => i !== index));
         }}
       >
         <ThemedText style={styles.removeText}>×</ThemedText>
       </TouchableOpacity>
-      <ThemedText type="subtitle">{item.product_name}</ThemedText>
-      <ThemedText>Protein: {item.macros.protein}g</ThemedText>
-      <ThemedText>Carbs: {item.macros.carbohydrates}g</ThemedText>
-      <ThemedText>Fat: {item.macros.fat}g</ThemedText>
-      <ThemedText>Calories: {item.macros.energy_kcal} kcal</ThemedText>
-    </ThemedView>
+    </View>
   );
 
   if (hasPermission === null) {
@@ -194,13 +201,21 @@ Scan another item?`,
               <ThemedText style={styles.emptyText}>Scan an item to begin comparing</ThemedText>
             </ThemedView>
           ) : (
-            <FlatList
-              data={scannedItems}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.barcode}
-              numColumns={2}
-              style={styles.list}
-            />
+            <View style={styles.tableContainer}>
+              <View style={styles.tableHeader}>
+                <ThemedText style={[styles.tableHeaderText, styles.itemColumn]}>Item</ThemedText>
+                <ThemedText style={[styles.tableHeaderText, styles.nutritionColumn]}>carbs(g)</ThemedText>
+                <ThemedText style={[styles.tableHeaderText, styles.nutritionColumn]}>fat(g)</ThemedText>
+                <ThemedText style={[styles.tableHeaderText, styles.nutritionColumn]}>protein(g)</ThemedText>
+                <View style={styles.actionColumn} />
+              </View>
+              <FlatList
+                data={scannedItems}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.barcode}
+                style={styles.tableList}
+              />
+            </View>
           )}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -236,15 +251,55 @@ const styles = StyleSheet.create({
   scannedContainer: {
     flex: 1,
     paddingTop: 60,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingBottom: 20,
   },
-  item: {
+  tableContainer: {
     flex: 1,
-    padding: 10,
-    margin: 5,
     backgroundColor: "#f9f9f9",
     borderRadius: 5,
+    marginHorizontal: 10,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#e0e0e0",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+  },
+  tableHeaderText: {
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  itemColumn: {
+    flex: 2,
+    paddingRight: 5,
+  },
+  nutritionColumn: {
+    flex: 1,
+    textAlign: "center",
+  },
+  actionColumn: {
+    width: 30,
+  },
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    alignItems: "center",
+  },
+  tableCell: {
+    fontSize: 14,
+  },
+  tableList: {
+    flex: 1,
+  },
+  tableRemoveButton: {
+    width: 30,
+    alignItems: "center",
   },
   list: {
     flex: 1,
