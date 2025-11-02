@@ -9,6 +9,7 @@ StyleSheet,
 TouchableOpacity,
 View,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Product {
   barcode: string;
@@ -27,6 +28,25 @@ export default function HomeScreen() {
   const [scannedItems, setScannedItems] = useState<Product[]>([]);
   const cameraRef = useRef<CameraView>(null);
   const isProcessing = useRef(false);
+
+  const saveComparison = async (items: Product[]) => {
+    console.log('saveComparison called with items:', items.length);
+    if (items.length === 0) return;
+    try {
+      const stored = await AsyncStorage.getItem('comparisons');
+      const history = stored ? JSON.parse(stored) : [];
+      const newComp = {
+        id: Date.now().toString(),
+        items,
+        date: new Date().toISOString(),
+      };
+      history.push(newComp);
+      await AsyncStorage.setItem('comparisons', JSON.stringify(history));
+      console.log('Comparison saved:', newComp);
+    } catch (error) {
+      console.log('Error saving comparison:', error);
+    }
+  };
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -120,50 +140,73 @@ Scan another item?`,
   return (
     <ThemedView style={styles.container}>
       {isScanning ? (
-        <CameraView
-          ref={cameraRef}
-          onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
-          onCameraReady={() => {
-            console.log('Camera ready');
-            if (cameraRef.current) {
-              const features = cameraRef.current.getSupportedFeatures();
-              console.log('Supported features:', features);
-            }
-          }}
-          onMountError={(error) => console.log('Camera mount error:', error)}
-          barcodeScannerSettings={{
-            barcodeTypes: [
-              "aztec",
-              "codabar",
-              "code128",
-              "code39",
-              "code93",
-              "datamatrix",
-              "ean13",
-              "ean8",
-              "itf14",
-              "pdf417",
-              "upc_a",
-              "upc_e",
-              "qr",
-            ],
-          }}
-          style={StyleSheet.absoluteFillObject}
-        />
+        <View style={styles.cameraContainer}>
+          <CameraView
+            ref={cameraRef}
+            onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
+            onCameraReady={() => {
+              console.log('Camera ready');
+              if (cameraRef.current) {
+                const features = cameraRef.current.getSupportedFeatures();
+                console.log('Supported features:', features);
+              }
+            }}
+            onMountError={(error) => console.log('Camera mount error:', error)}
+            barcodeScannerSettings={{
+              barcodeTypes: [
+                "aztec",
+                "codabar",
+                "code128",
+                "code39",
+                "code93",
+                "datamatrix",
+                "ean13",
+                "ean8",
+                "itf14",
+                "pdf417",
+                "upc_a",
+                "upc_e",
+                "qr",
+              ],
+            }}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setIsScanning(false)}
+          >
+            <ThemedText style={styles.backButtonText}>View Current Comparison</ThemedText>
+          </TouchableOpacity>
+        </View>
       ) : (
         <View style={styles.scannedContainer}>
+          <ThemedText type="title" style={styles.title}>Scanned Items</ThemedText>
           <FlatList
             data={scannedItems}
             renderItem={renderItem}
             keyExtractor={(item) => item.barcode}
+            numColumns={2}
             style={styles.list}
           />
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => { setIsScanning(true); isProcessing.current = false; }}
-          >
-            <ThemedText>Scan Another Item</ThemedText>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => { setIsScanning(true); isProcessing.current = false; }}
+            >
+              <ThemedText>Scan Another Item</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                saveComparison(scannedItems);
+                setScannedItems([]);
+                setIsScanning(true);
+                isProcessing.current = false;
+              }}
+            >
+              <ThemedText>New Comparison</ThemedText>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </ThemedView>
@@ -176,11 +219,14 @@ const styles = StyleSheet.create({
   },
   scannedContainer: {
     flex: 1,
-    padding: 20,
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   item: {
+    flex: 1,
     padding: 10,
-    marginVertical: 5,
+    margin: 5,
     backgroundColor: "#f9f9f9",
     borderRadius: 5,
   },
@@ -192,6 +238,31 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  cameraContainer: {
+    flex: 1,
+  },
+  backButton: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 10,
+    borderRadius: 5,
+  },
+  backButtonText: {
+    color: "white",
+    fontSize: 16,
+  },
+  title: {
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginTop: 20,
   },
 });
