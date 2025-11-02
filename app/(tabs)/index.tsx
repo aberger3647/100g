@@ -1,98 +1,135 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { CameraView, Camera } from 'expo-camera';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+
+interface Product {
+  barcode: string;
+  product_name: string;
+  macros: {
+    protein: number;
+    carbohydrates: number;
+    fat: number;
+    energy_kcal: number;
+  };
+}
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [scanned, setScanned] = useState(false);
+  const [scannedItems, setScannedItems] = useState<Product[]>([]);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    const getCameraPermissions = async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    };
+
+    getCameraPermissions();
+  }, []);
+
+  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    console.log('Barcode scanned:', data);
+    setScanned(true);
+    try {
+      console.log('Fetching data for barcode:', data);
+      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${data}.json`);
+      console.log('Response status:', response.status);
+      const json = await response.json();
+      console.log('API response:', json);
+      if (json.status === 1) {
+        const product = json.product;
+        const macros = {
+          protein: product.nutriments.proteins_100g || 0,
+          carbohydrates: product.nutriments.carbohydrates_100g || 0,
+          fat: product.nutriments.fat_100g || 0,
+          energy_kcal: product.nutriments.energy_kcal_100g || 0,
+        };
+        console.log('Macros:', macros);
+        const newItem: Product = {
+          barcode: data,
+          product_name: product.product_name || 'Unknown',
+          macros,
+        };
+        setScannedItems(prev => [...prev, newItem]);
+        console.log('Item added:', newItem);
+      } else {
+        console.log('Product not found');
+        Alert.alert('Product not found', 'Could not find product data for this barcode.');
+      }
+    } catch (error) {
+      console.log('Fetch error:', error);
+      Alert.alert('Error', 'Failed to fetch product data.');
+    }
+  };
+
+  const renderItem = ({ item }: { item: Product }) => (
+    <ThemedView style={styles.item}>
+      <ThemedText type="subtitle">{item.product_name}</ThemedText>
+      <ThemedText>Protein: {item.macros.protein}g</ThemedText>
+      <ThemedText>Carbs: {item.macros.carbohydrates}g</ThemedText>
+      <ThemedText>Fat: {item.macros.fat}g</ThemedText>
+      <ThemedText>Calories: {item.macros.energy_kcal} kcal</ThemedText>
+    </ThemedView>
+  );
+
+  if (hasPermission === null) {
+    return <ThemedView style={styles.container}><ThemedText>Requesting camera permission...</ThemedText></ThemedView>;
+  }
+  if (hasPermission === false) {
+    return <ThemedView style={styles.container}><ThemedText>No access to camera</ThemedText></ThemedView>;
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      {!scanned ? (
+        <CameraView
+          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+          barcodeScannerSettings={{
+            barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e'],
+          }}
+          style={StyleSheet.absoluteFillObject}
+        />
+      ) : (
+        <View style={styles.scannedContainer}>
+          <FlatList
+            data={scannedItems}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.barcode}
+            style={styles.list}
+          />
+          <TouchableOpacity style={styles.button} onPress={() => setScanned(false)}>
+            <ThemedText>Scan Again</ThemedText>
+          </TouchableOpacity>
+        </View>
+      )}
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+  scannedContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  item: {
+    padding: 10,
+    marginVertical: 5,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 5,
+  },
+  list: {
+    flex: 1,
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 5,
     alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+    marginTop: 20,
   },
 });
