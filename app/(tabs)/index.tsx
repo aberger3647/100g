@@ -23,9 +23,10 @@ interface Product {
 
 export default function HomeScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [scanned, setScanned] = useState(false);
+  const [isScanning, setIsScanning] = useState(true);
   const [scannedItems, setScannedItems] = useState<Product[]>([]);
   const cameraRef = useRef<CameraView>(null);
+  const isProcessing = useRef(false);
 
   useEffect(() => {
     const getCameraPermissions = async () => {
@@ -37,8 +38,13 @@ export default function HomeScreen() {
   }, []);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    if (isProcessing.current) return;
     console.log("Barcode scanned:", data);
-    setScanned(true);
+    isProcessing.current = true;
+    if (scannedItems.some(item => item.barcode === data)) {
+      Alert.alert("Duplicate", "This item has already been scanned.", [{ text: "OK", onPress: () => { isProcessing.current = false; } }]);
+      return;
+    }
     try {
       console.log("Fetching data for barcode:", data);
       const response = await fetch(
@@ -50,10 +56,10 @@ export default function HomeScreen() {
       if (json.status === 1) {
         const product = json.product;
         const macros = {
-          protein: product.nutriments.proteins_100g || 0,
-          carbohydrates: product.nutriments.carbohydrates_100g || 0,
-          fat: product.nutriments.fat_100g || 0,
-          energy_kcal: product.nutriments.energy_kcal_100g || 0,
+          protein: product.nutriments['proteins_100g'] || 0,
+          carbohydrates: product.nutriments['carbohydrates_100g'] || 0,
+          fat: product.nutriments['fat_100g'] || 0,
+          energy_kcal: product.nutriments['energy-kcal_100g'] || 0,
         };
         console.log("Macros:", macros);
         const newItem: Product = {
@@ -63,16 +69,26 @@ export default function HomeScreen() {
         };
         setScannedItems((prev) => [...prev, newItem]);
         console.log("Item added:", newItem);
+        Alert.alert(
+        "Item Scanned",
+        `Scanned: ${product.product_name || 'Unknown'}
+Scan another item?`,
+        [
+        { text: "No", onPress: () => { setIsScanning(false); isProcessing.current = false; } },
+        { text: "Yes", onPress: () => { isProcessing.current = false; }, style: "default" },
+        ]
+        );
       } else {
         console.log("Product not found");
         Alert.alert(
           "Product not found",
-          "Could not find product data for this barcode."
+          "Could not find product data for this barcode.",
+          [{ text: "OK", onPress: () => { isProcessing.current = false; } }]
         );
       }
     } catch (error) {
       console.log("Fetch error:", error);
-      Alert.alert("Error", "Failed to fetch product data.");
+      Alert.alert("Error", "Failed to fetch product data.", [{ text: "OK", onPress: () => { isProcessing.current = false; } }]);
     }
   };
 
@@ -103,10 +119,10 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      {!scanned ? (
+      {isScanning ? (
         <CameraView
           ref={cameraRef}
-          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+          onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
           onCameraReady={() => {
             console.log('Camera ready');
             if (cameraRef.current) {
@@ -144,9 +160,9 @@ export default function HomeScreen() {
           />
           <TouchableOpacity
             style={styles.button}
-            onPress={() => setScanned(false)}
+            onPress={() => { setIsScanning(true); isProcessing.current = false; }}
           >
-            <ThemedText>Scan Again</ThemedText>
+            <ThemedText>Scan Another Item</ThemedText>
           </TouchableOpacity>
         </View>
       )}
