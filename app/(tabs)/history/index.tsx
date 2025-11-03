@@ -21,8 +21,9 @@ export default function HistoryScreen() {
       console.log('Stored history:', stored);
       if (stored) {
         const parsed = JSON.parse(stored);
-        setHistory(parsed);
-        console.log('Parsed history:', parsed);
+        const sorted = parsed.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setHistory(sorted);
+        console.log('Parsed and sorted history:', sorted);
       } else {
         console.log('No stored history');
       }
