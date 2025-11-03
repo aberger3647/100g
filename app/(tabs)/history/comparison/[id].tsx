@@ -51,8 +51,6 @@ export default function ComparisonDetailScreen() {
     }
   };
 
-
-
   if (!comparison) {
     return (
       <ThemedView style={styles.container}>

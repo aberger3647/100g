@@ -70,7 +70,7 @@ export default function HistoryScreen() {
     <ThemedView style={styles.comparison}>
       <TouchableOpacity
         style={styles.comparisonContent}
-        onPress={() => router.push(`/history/${item.id}`)}
+        onPress={() => router.push(`/history/comparison/${item.id}`)}
       >
         <ThemedText type="subtitle" style={{marginBottom: 5}}>{item.items.map(i => i.product_name).join(' vs ')}</ThemedText>
         <ThemedText>{new Date(item.date).toLocaleDateString() + ' ' + new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</ThemedText>
