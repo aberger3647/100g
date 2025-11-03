@@ -2,17 +2,7 @@ import React, { useRef } from 'react';
 import { TouchableOpacity, View, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { StyleSheet } from 'react-native';
-
-interface Product {
-  barcode: string;
-  product_name: string;
-  macros: {
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-    energy_kcal: number;
-  };
-}
+import { Product } from '@/types';
 
 interface ItemsTableProps {
   items: Product[];

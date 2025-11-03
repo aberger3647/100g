@@ -5,23 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { StyleSheet } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-
-interface Product {
-  barcode: string;
-  product_name: string;
-  macros: {
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-    energy_kcal: number;
-  };
-}
-
-interface Comparison {
-  id: string;
-  items: Product[];
-  date: string;
-}
+import { Product, Comparison } from '@/types';
 
 export default function HistoryScreen() {
   const [history, setHistory] = useState<Comparison[]>([]);

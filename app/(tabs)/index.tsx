@@ -5,28 +5,18 @@ import { Camera, CameraView } from "expo-camera";
 import React, { useEffect, useRef, useState } from "react";
 import {
 Alert,
-FlatList,
 StyleSheet,
 TouchableOpacity,
 View,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface Product {
-  barcode: string;
-  product_name: string;
-  macros: {
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-    energy_kcal: number;
-  };
-}
+import { Product, Comparison } from '@/types';
 
 export default function HomeScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(true);
   const [scannedItems, setScannedItems] = useState<Product[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const isProcessing = useRef(false);
 
@@ -35,15 +25,25 @@ export default function HomeScreen() {
     if (items.length === 0) return;
     try {
       const stored = await AsyncStorage.getItem('comparisons');
-      const history = stored ? JSON.parse(stored) : [];
-      const newComp = {
-        id: Date.now().toString(),
-        items,
-        date: new Date().toISOString(),
-      };
-      history.push(newComp);
+      let history = (stored ? JSON.parse(stored) : []) as Comparison[];
+      if (editingId) {
+        // update existing
+        const index = history.findIndex(c => c.id === editingId);
+        if (index !== -1) {
+          history[index] = { ...history[index], items, date: new Date().toISOString() };
+          console.log('Comparison updated:', editingId);
+        }
+        setEditingId(null);
+      } else {
+        const newComp = {
+          id: Date.now().toString(),
+          items,
+          date: new Date().toISOString(),
+        };
+        history.push(newComp);
+        console.log('Comparison saved:', newComp);
+      }
       await AsyncStorage.setItem('comparisons', JSON.stringify(history));
-      console.log('Comparison saved:', newComp);
     } catch (error) {
       console.log('Error saving comparison:', error);
     }
@@ -55,7 +55,25 @@ export default function HomeScreen() {
       setHasPermission(status === "granted");
     };
 
+    const checkEditing = async () => {
+      const editingIdStored = await AsyncStorage.getItem('editingComparisonId');
+      if (editingIdStored) {
+        const stored = await AsyncStorage.getItem('comparisons');
+        if (stored) {
+          const history = JSON.parse(stored) as Comparison[];
+          const comp = history.find(c => c.id === editingIdStored);
+          if (comp) {
+            setScannedItems(comp.items);
+            setEditingId(editingIdStored);
+            setIsScanning(false);
+          }
+        }
+        await AsyncStorage.removeItem('editingComparisonId');
+      }
+    };
+
     getCameraPermissions();
+    checkEditing();
   }, []);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
@@ -76,12 +94,13 @@ export default function HomeScreen() {
       console.log("API response:", json);
       if (json.status === 1) {
         const product = json.product;
-        console.log('Nutriments:', product.nutriments);
+        const nutriments = product.nutriments || {};
+        console.log('Nutriments:', nutriments);
         const macros = {
-          protein: product.nutriments['proteins_100g'] || 0,
-          carbohydrates: product.nutriments['carbohydrates_100g'] || 0,
-          fat: product.nutriments['fat_100g'] || 0,
-          energy_kcal: product.nutriments['energy-kcal_100g'] || 0,
+          protein: nutriments['proteins_100g'] || 0,
+          carbohydrates: nutriments['carbohydrates_100g'] || 0,
+          fat: nutriments['fat_100g'] || 0,
+          energy_kcal: nutriments['energy-kcal_100g'] || 0,
         };
         console.log("Macros:", macros);
         const newItem: Product = {
@@ -186,25 +205,60 @@ Scan another item?`,
             />
           )}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => { setIsScanning(true); isProcessing.current = false; }}
-            >
-              <ThemedText style={styles.buttonText}>
-                {scannedItems.length === 0 ? "Scan an item" : "Scan another item"}
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-                saveComparison(scannedItems);
-                setScannedItems([]);
-                setIsScanning(true);
-                isProcessing.current = false;
-              }}
-            >
-              <ThemedText style={styles.buttonText}>New Comparison</ThemedText>
-            </TouchableOpacity>
+            {editingId ? (
+              <>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => { setIsScanning(true); isProcessing.current = false; }}
+                >
+                  <ThemedText style={styles.buttonText}>Scan to Add Item</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => {
+                    saveComparison(scannedItems);
+                    setScannedItems([]);
+                    setIsScanning(true);
+                    isProcessing.current = false;
+                  }}
+                >
+                  <ThemedText style={styles.buttonText}>Save Changes</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={() => {
+                    setScannedItems([]);
+                    setEditingId(null);
+                    setIsScanning(true);
+                    isProcessing.current = false;
+                  }}
+                >
+                  <ThemedText style={styles.buttonText}>Cancel Edit</ThemedText>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => { setIsScanning(true); isProcessing.current = false; }}
+                >
+                  <ThemedText style={styles.buttonText}>
+                    {scannedItems.length === 0 ? "Scan an item" : "Scan another item"}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => {
+                    saveComparison(scannedItems);
+                    setScannedItems([]);
+                    setIsScanning(true);
+                    isProcessing.current = false;
+                  }}
+                >
+                  <ThemedText style={styles.buttonText}>New Comparison</ThemedText>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       )}
@@ -229,6 +283,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     marginHorizontal: 5,
+    marginVertical: 5,
+  },
+  cancelButton: {
+    backgroundColor: "#FF3B30",
   },
   buttonText: {
     color: "white",
@@ -256,6 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginTop: 20,
+    flexWrap: "wrap",
   },
   emptyContainer: {
     flex: 1,

@@ -1,28 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import ItemsTable from '@/components/ItemsTable';
-
-interface Product {
-  barcode: string;
-  product_name: string;
-  macros: {
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-    energy_kcal: number;
-  };
-}
-
-interface Comparison {
-  id: string;
-  items: Product[];
-  date: string;
-}
+import { Product, Comparison } from '@/types';
 
 export default function ComparisonDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -69,6 +53,12 @@ export default function ComparisonDetailScreen() {
       ) : (
         <ItemsTable items={comparison.items} />
       )}
+      <TouchableOpacity style={styles.editButton} onPress={async () => {
+        await AsyncStorage.setItem('editingComparisonId', id);
+        router.push('/');
+      }}>
+        <ThemedText style={styles.editButtonText}>Edit Comparison</ThemedText>
+      </TouchableOpacity>
     </ThemedView>
   );
 }
@@ -99,5 +89,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  editButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  editButtonText: {
+    color: 'white',
+    fontSize: 16,
   },
 });
