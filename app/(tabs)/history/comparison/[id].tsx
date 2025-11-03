@@ -61,8 +61,7 @@ export default function ComparisonDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>Scanned Items</ThemedText>
-      <ThemedText style={styles.dateText}>{new Date(comparison.date).toLocaleDateString() + ' ' + new Date(comparison.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</ThemedText>
+      <ThemedText type="title" style={styles.title}>{new Date(comparison.date).toLocaleDateString() + ' ' + new Date(comparison.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</ThemedText>
       {comparison.items.length === 0 ? (
         <ThemedView style={styles.emptyContainer}>
           <ThemedText style={styles.emptyText}>No items in this comparison</ThemedText>

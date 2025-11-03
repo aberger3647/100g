@@ -6,6 +6,7 @@ export default function HistoryLayout() {
     <Stack
       screenOptions={{
         gestureEnabled: true,
+        headerShown: false,
       }}
     >
       <Stack.Screen
