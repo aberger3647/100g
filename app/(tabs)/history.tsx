@@ -72,14 +72,14 @@ export default function HistoryScreen() {
         style={styles.comparisonContent}
         onPress={() => router.push(`/history/${item.id}`)}
       >
-        <ThemedText type="subtitle">{item.items.map(i => i.product_name).join(' vs ')}</ThemedText>
-        <ThemedText>{new Date(item.date).toLocaleString()}</ThemedText>
+        <ThemedText type="subtitle" style={{marginBottom: 5}}>{item.items.map(i => i.product_name).join(' vs ')}</ThemedText>
+        <ThemedText>{new Date(item.date).toLocaleDateString() + ' ' + new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</ThemedText>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => deleteComparison(item.id)}
       >
-        <ThemedText style={styles.deleteButtonText}>Delete</ThemedText>
+        <ThemedText style={styles.deleteButtonText}>×</ThemedText>
       </TouchableOpacity>
     </ThemedView>
   );
@@ -104,7 +104,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 40,
+    paddingTop: 60,
     paddingHorizontal: 10,
     paddingBottom: 20,
   },
@@ -128,11 +128,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   deleteButton: {
-    backgroundColor: '#FF3B30',
-    padding: 10,
-    borderRadius: 5,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   deleteButtonText: {
-    color: 'white',
+    color: 'gray',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
