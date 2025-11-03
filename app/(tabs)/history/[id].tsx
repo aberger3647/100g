@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList } from 'react-native';
+import { View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import ItemsTable from '@/components/ItemsTable';
 
 interface Product {
   barcode: string;
@@ -50,15 +51,7 @@ export default function ComparisonDetailScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: Product }) => (
-    <ThemedView style={styles.item}>
-      <ThemedText type="subtitle">{item.product_name}</ThemedText>
-      <ThemedText>Protein: {item.macros.protein}g</ThemedText>
-      <ThemedText>Carbs: {item.macros.carbohydrates}g</ThemedText>
-      <ThemedText>Fat: {item.macros.fat}g</ThemedText>
-      <ThemedText>Calories: {item.macros.energy_kcal} kcal</ThemedText>
-    </ThemedView>
-  );
+
 
   if (!comparison) {
     return (
@@ -70,16 +63,14 @@ export default function ComparisonDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>
-        Comparison from {new Date(comparison.date).toLocaleString()}
-      </ThemedText>
-      <FlatList
-        data={comparison.items}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.barcode}
-        numColumns={2}
-        style={styles.list}
-      />
+      <ThemedText type="title" style={styles.title}>Scanned Items</ThemedText>
+      {comparison.items.length === 0 ? (
+        <ThemedView style={styles.emptyContainer}>
+          <ThemedText style={styles.emptyText}>No items in this comparison</ThemedText>
+        </ThemedView>
+      ) : (
+        <ItemsTable items={comparison.items} />
+      )}
     </ThemedView>
   );
 }
@@ -87,7 +78,7 @@ export default function ComparisonDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 40,
+    paddingTop: 60,
     paddingHorizontal: 10,
     paddingBottom: 20,
   },
@@ -95,14 +86,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  list: {
+  emptyContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  item: {
-    flex: 1,
-    padding: 10,
-    margin: 5,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 5,
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });

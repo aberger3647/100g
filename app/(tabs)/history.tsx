@@ -79,7 +79,7 @@ export default function HistoryScreen() {
         style={styles.deleteButton}
         onPress={() => deleteComparison(item.id)}
       >
-        <ThemedText>Delete</ThemedText>
+        <ThemedText style={styles.deleteButtonText}>Delete</ThemedText>
       </TouchableOpacity>
     </ThemedView>
   );
@@ -131,5 +131,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF3B30',
     padding: 10,
     borderRadius: 5,
+  },
+  deleteButtonText: {
+    color: 'white',
   },
 });

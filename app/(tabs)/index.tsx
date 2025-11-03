@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import ItemsTable from "@/components/ItemsTable";
 import { Camera, CameraView } from "expo-camera";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -112,30 +113,7 @@ Scan another item?`,
     }
   };
 
-  const renderItem = ({ item, index }: { item: Product; index: number }) => (
-    <View style={styles.tableRow}>
-      <ThemedText style={[styles.tableCell, styles.itemColumn]} numberOfLines={2}>
-        {item.product_name}
-      </ThemedText>
-      <ThemedText style={[styles.tableCell, styles.nutritionColumn]}>
-        {Math.floor(item.macros.carbohydrates)}
-      </ThemedText>
-      <ThemedText style={[styles.tableCell, styles.nutritionColumn]}>
-        {Math.floor(item.macros.fat)}
-      </ThemedText>
-      <ThemedText style={[styles.tableCell, styles.nutritionColumn]}>
-        {Math.floor(item.macros.protein)}
-      </ThemedText>
-      <TouchableOpacity
-        style={styles.tableRemoveButton}
-        onPress={() => {
-          setScannedItems((prev) => prev.filter((_, i) => i !== index));
-        }}
-      >
-        <ThemedText style={styles.removeText}>×</ThemedText>
-      </TouchableOpacity>
-    </View>
-  );
+
 
   if (hasPermission === null) {
     return (
@@ -201,21 +179,10 @@ Scan another item?`,
               <ThemedText style={styles.emptyText}>Scan an item to begin comparing</ThemedText>
             </ThemedView>
           ) : (
-            <View style={styles.tableContainer}>
-              <View style={styles.tableHeader}>
-                <ThemedText style={[styles.tableHeaderText, styles.itemColumn]}>Item</ThemedText>
-                <ThemedText style={[styles.tableHeaderText, styles.nutritionColumn]}>carbs(g)</ThemedText>
-                <ThemedText style={[styles.tableHeaderText, styles.nutritionColumn]}>fat(g)</ThemedText>
-                <ThemedText style={[styles.tableHeaderText, styles.nutritionColumn]}>protein(g)</ThemedText>
-                <View style={styles.actionColumn} />
-              </View>
-              <FlatList
-                data={scannedItems}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.barcode}
-                style={styles.tableList}
-              />
-            </View>
+            <ItemsTable
+              items={scannedItems}
+              onRemove={(index) => setScannedItems((prev) => prev.filter((_, i) => i !== index))}
+            />
           )}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -254,56 +221,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingBottom: 20,
   },
-  tableContainer: {
-    flex: 1,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 5,
-    marginHorizontal: 10,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#e0e0e0",
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderTopLeftRadius: 5,
-    borderTopRightRadius: 5,
-  },
-  tableHeaderText: {
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  itemColumn: {
-    flex: 2,
-    paddingRight: 5,
-  },
-  nutritionColumn: {
-    flex: 1,
-    textAlign: "center",
-  },
-  actionColumn: {
-    width: 30,
-  },
-  tableRow: {
-    flexDirection: "row",
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    alignItems: "center",
-  },
-  tableCell: {
-    fontSize: 14,
-  },
-  tableList: {
-    flex: 1,
-  },
-  tableRemoveButton: {
-    width: 30,
-    alignItems: "center",
-  },
-  list: {
-    flex: 1,
-  },
   button: {
     backgroundColor: "#007AFF",
     padding: 15,
@@ -338,16 +255,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginTop: 20,
-  },
-  removeButton: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-  },
-  removeText: {
-    color: "#FF3B30",
-    fontSize: 18,
-    fontWeight: "bold",
   },
   emptyContainer: {
     flex: 1,
