@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 interface Product {
   barcode: string;
@@ -27,9 +27,9 @@ export default function HistoryScreen() {
   const [history, setHistory] = useState<Comparison[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     loadHistory();
-  }, []);
+  }, []));
 
   const loadHistory = async () => {
     try {

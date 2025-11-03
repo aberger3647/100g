@@ -76,6 +76,7 @@ export default function HomeScreen() {
       console.log("API response:", json);
       if (json.status === 1) {
         const product = json.product;
+        console.log('Nutriments:', product.nutriments);
         const macros = {
           protein: product.nutriments['proteins_100g'] || 0,
           carbohydrates: product.nutriments['carbohydrates_100g'] || 0,

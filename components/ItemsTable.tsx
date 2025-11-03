@@ -65,54 +65,56 @@ export default function ItemsTable({ items, onRemove }: ItemsTableProps) {
           </View>
         </ScrollView>
       </View>
-      <View style={styles.dataContainer}>
-        <View style={[styles.itemColumnContainer, { width: ITEM_WIDTH }]}>
-          {items.map((item) => (
-            <View key={item.barcode} style={styles.itemCell}>
-              <ThemedText style={[styles.tableCell, styles.itemText]} numberOfLines={2}>
-                {item.product_name}
-              </ThemedText>
-            </View>
-          ))}
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollableData} ref={dataScrollRef} onScroll={handleDataScroll}>
-          <View style={styles.dataContent}>
-            {items.map((item, index) => (
-              <View key={item.barcode} style={styles.dataRow}>
-                <View style={[styles.cell, { width: NUTRITION_WIDTH }]}>
-                  <ThemedText style={styles.tableCell}>
-                    {Math.floor(item.macros.carbohydrates)}
-                  </ThemedText>
-                </View>
-                <View style={[styles.cell, { width: NUTRITION_WIDTH }]}>
-                  <ThemedText style={styles.tableCell}>
-                    {Math.floor(item.macros.fat)}
-                  </ThemedText>
-                </View>
-                <View style={[styles.cell, { width: NUTRITION_WIDTH }]}>
-                  <ThemedText style={styles.tableCell}>
-                    {Math.floor(item.macros.protein)}
-                  </ThemedText>
-                </View>
-                <View style={[styles.cell, { width: CALORIES_WIDTH }]}>
-                  <ThemedText style={styles.tableCell}>
-                    {Math.floor(item.macros.energy_kcal)}
-                  </ThemedText>
-                </View>
-                <View style={[styles.cell, { width: DELETE_WIDTH }]}>
-                  <TouchableOpacity
-                    style={[styles.deleteButton, !onRemove && styles.disabledButton]}
-                    onPress={onRemove ? () => onRemove(index) : undefined}
-                    disabled={!onRemove}
-                  >
-                    <ThemedText style={[styles.deleteText, !onRemove && styles.disabledText]}>×</ThemedText>
-                  </TouchableOpacity>
-                </View>
+      <ScrollView vertical showsVerticalScrollIndicator={true} style={styles.dataScrollContainer}>
+        <View style={styles.dataContainer}>
+          <View style={[styles.itemColumnContainer, { width: ITEM_WIDTH }]}>
+            {items.map((item) => (
+              <View key={item.barcode} style={styles.itemCell}>
+                <ThemedText style={[styles.tableCell, styles.itemText]} numberOfLines={2}>
+                  {item.product_name}
+                </ThemedText>
               </View>
             ))}
           </View>
-        </ScrollView>
-      </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollableData} ref={dataScrollRef} onScroll={handleDataScroll}>
+            <View style={styles.dataContent}>
+              {items.map((item, index) => (
+                <View key={item.barcode} style={styles.dataRow}>
+                  <View style={[styles.cell, { width: NUTRITION_WIDTH }]}>
+                    <ThemedText style={styles.tableCell}>
+                      {Math.floor(item.macros.carbohydrates)}
+                    </ThemedText>
+                  </View>
+                  <View style={[styles.cell, { width: NUTRITION_WIDTH }]}>
+                    <ThemedText style={styles.tableCell}>
+                      {Math.floor(item.macros.fat)}
+                    </ThemedText>
+                  </View>
+                  <View style={[styles.cell, { width: NUTRITION_WIDTH }]}>
+                    <ThemedText style={styles.tableCell}>
+                      {Math.floor(item.macros.protein)}
+                    </ThemedText>
+                  </View>
+                  <View style={[styles.cell, { width: CALORIES_WIDTH }]}>
+                    <ThemedText style={styles.tableCell}>
+                      {Math.floor(item.macros.energy_kcal)}
+                    </ThemedText>
+                  </View>
+                  <View style={[styles.cell, { width: DELETE_WIDTH }]}>
+                    <TouchableOpacity
+                      style={[styles.deleteButton, !onRemove && styles.disabledButton]}
+                      onPress={onRemove ? () => onRemove(index) : undefined}
+                      disabled={!onRemove}
+                    >
+                      <ThemedText style={[styles.deleteText, !onRemove && styles.disabledText]}>×</ThemedText>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -153,6 +155,8 @@ const styles = StyleSheet.create({
   },
   dataContainer: {
     flexDirection: 'row',
+  },
+  dataScrollContainer: {
     flex: 1,
   },
   itemColumnContainer: {
