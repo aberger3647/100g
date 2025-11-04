@@ -1,28 +1,30 @@
 import React, { useRef } from 'react';
-import { TouchableOpacity, View, ScrollView } from 'react-native';
+import { TouchableOpacity, View, ScrollView, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { StyleSheet } from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { Product } from '@/types';
 
 interface ItemsTableProps {
   items: Product[];
   onRemove?: (index: number) => void;
+  onSort?: (key: 'carbs' | 'fat' | 'protein' | 'calories') => void;
+  currentSortKey?: 'carbs' | 'fat' | 'protein' | 'calories' | null;
+  currentSortOrder?: 'asc' | 'desc';
 }
 
 const ITEM_WIDTH = 150;
-const NUTRITION_WIDTH = 70;
-const CALORIES_WIDTH = 90;
+const NUTRITION_WIDTH = 75;
+const CALORIES_WIDTH = 95;
 const DELETE_WIDTH = 40;
 const ROW_HEIGHT = 48;
 
-export default function ItemsTable({ items, onRemove }: ItemsTableProps) {
+export default function ItemsTable({ items, onRemove, onSort, currentSortKey, currentSortOrder }: ItemsTableProps) {
   const headerScrollRef = useRef<ScrollView>(null);
   const dataScrollRef = useRef<ScrollView>(null);
 
-  const handleHeaderScroll = (event: any) => {
-    const offset = event.nativeEvent.contentOffset.x;
-    dataScrollRef.current?.scrollTo({ x: offset, animated: false });
-  };
+  const tableBackground = useThemeColor({light: '#f9f9f9', dark: '#1a1a1a'}, 'background');
+  const headerBackground = useThemeColor({light: '#e0e0e0', dark: '#2a2a2a'}, 'background');
+  const borderColor = useThemeColor({light: '#e0e0e0', dark: '#2a2a2a'}, 'background');
 
   const handleDataScroll = (event: any) => {
     const offset = event.nativeEvent.contentOffset.x;
@@ -30,25 +32,52 @@ export default function ItemsTable({ items, onRemove }: ItemsTableProps) {
   };
 
   return (
-    <View style={styles.tableContainer}>
-      <View style={styles.headerRow}>
+    <View style={[styles.tableContainer, {backgroundColor: tableBackground}]}>
+      <View style={[styles.headerRow, {backgroundColor: headerBackground}]}>
         <View style={[styles.headerCell, { width: ITEM_WIDTH }]}>
           <ThemedText style={[styles.tableHeaderText, styles.leftAlign, {paddingLeft: 10}]}>Item</ThemedText>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollableHeader} ref={headerScrollRef} onScroll={handleHeaderScroll}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollableHeader} ref={headerScrollRef}>
           <View style={styles.scrollableContent}>
-            <View style={[styles.headerCell, { width: NUTRITION_WIDTH }]}>
-              <ThemedText style={styles.tableHeaderText}>Carbs</ThemedText>
-            </View>
-            <View style={[styles.headerCell, { width: NUTRITION_WIDTH }]}>
-              <ThemedText style={styles.tableHeaderText}>Fat</ThemedText>
-            </View>
-            <View style={[styles.headerCell, { width: NUTRITION_WIDTH }]}>
-              <ThemedText style={styles.tableHeaderText}>Protein</ThemedText>
-            </View>
-            <View style={[styles.headerCell, { width: CALORIES_WIDTH }]}>
-              <ThemedText style={styles.tableHeaderText}>Calories</ThemedText>
-            </View>
+            {onSort ? (
+              <>
+                <TouchableOpacity style={[styles.headerCell, { width: NUTRITION_WIDTH }]} onPress={() => onSort?.('carbs')}>
+                  <ThemedText style={styles.tableHeaderText}>
+                    Carbs{currentSortKey === 'carbs' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.headerCell, { width: NUTRITION_WIDTH }]} onPress={() => onSort?.('fat')}>
+                  <ThemedText style={styles.tableHeaderText}>
+                    Fat{currentSortKey === 'fat' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.headerCell, { width: NUTRITION_WIDTH }]} onPress={() => onSort?.('protein')}>
+                  <ThemedText style={styles.tableHeaderText}>
+                    Protein{currentSortKey === 'protein' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.headerCell, { width: CALORIES_WIDTH }]} onPress={() => onSort?.('calories')}>
+                  <ThemedText style={styles.tableHeaderText}>
+                    Calories{currentSortKey === 'calories' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
+                  </ThemedText>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={[styles.headerCell, { width: NUTRITION_WIDTH }]}>
+                  <ThemedText style={styles.tableHeaderText}>Carbs</ThemedText>
+                </View>
+                <View style={[styles.headerCell, { width: NUTRITION_WIDTH }]}>
+                  <ThemedText style={styles.tableHeaderText}>Fat</ThemedText>
+                </View>
+                <View style={[styles.headerCell, { width: NUTRITION_WIDTH }]}>
+                  <ThemedText style={styles.tableHeaderText}>Protein</ThemedText>
+                </View>
+                <View style={[styles.headerCell, { width: CALORIES_WIDTH }]}>
+                  <ThemedText style={styles.tableHeaderText}>Calories</ThemedText>
+                </View>
+              </>
+            )}
             <View style={[styles.headerCell, { width: DELETE_WIDTH }]}>
               <ThemedText style={styles.tableHeaderText}></ThemedText>
             </View>
@@ -59,7 +88,7 @@ export default function ItemsTable({ items, onRemove }: ItemsTableProps) {
         <View style={styles.dataContainer}>
           <View style={[styles.itemColumnContainer, { width: ITEM_WIDTH }]}>
             {items.map((item) => (
-              <View key={item.barcode} style={styles.itemCell}>
+              <View key={item.barcode} style={[styles.itemCell, {borderBottomColor: borderColor}]}>
                 <ThemedText style={[styles.tableCell, styles.itemText]} numberOfLines={2}>
                   {item.product_name}
                 </ThemedText>
@@ -69,7 +98,7 @@ export default function ItemsTable({ items, onRemove }: ItemsTableProps) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollableData} ref={dataScrollRef} onScroll={handleDataScroll}>
             <View style={styles.dataContent}>
               {items.map((item, index) => (
-                <View key={item.barcode} style={styles.dataRow}>
+                <View key={item.barcode} style={[styles.dataRow, {borderBottomColor: borderColor}]}>
                   <View style={[styles.cell, { width: NUTRITION_WIDTH }]}>
                     <ThemedText style={styles.tableCell}>
                       {Math.floor(item.macros.carbohydrates)}
@@ -112,13 +141,11 @@ export default function ItemsTable({ items, onRemove }: ItemsTableProps) {
 const styles = StyleSheet.create({
   tableContainer: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
     borderRadius: 5,
     marginHorizontal: 10,
   },
   headerRow: {
     flexDirection: 'row',
-    backgroundColor: '#e0e0e0',
     borderTopLeftRadius: 5,
     borderTopRightRadius: 5,
   },
@@ -158,7 +185,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     justifyContent: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   itemText: {
     flex: 1,
@@ -176,7 +202,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   cell: {
     paddingVertical: 12,

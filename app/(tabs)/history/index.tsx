@@ -5,11 +5,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { StyleSheet } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { Product, Comparison } from '@/types';
 
 export default function HistoryScreen() {
   const [history, setHistory] = useState<Comparison[]>([]);
   const router = useRouter();
+  const comparisonBackground = useThemeColor({light: '#f9f9f9', dark: '#1a1a1a'}, 'background');
 
   useFocusEffect(useCallback(() => {
     loadHistory();
@@ -52,7 +54,7 @@ export default function HistoryScreen() {
   };
 
   const renderComparison = ({ item }: { item: Comparison }) => (
-    <ThemedView style={styles.comparison}>
+    <ThemedView style={[styles.comparison, {backgroundColor: comparisonBackground}]}>
       <TouchableOpacity
         style={styles.comparisonContent}
         onPress={() => router.push(`/history/comparison/${item.id}`)}
@@ -103,7 +105,6 @@ const styles = StyleSheet.create({
   comparison: {
     padding: 15,
     marginVertical: 5,
-    backgroundColor: '#f9f9f9',
     borderRadius: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
