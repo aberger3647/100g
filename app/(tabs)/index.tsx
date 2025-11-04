@@ -32,8 +32,9 @@ export default function HomeScreen() {
 
   const handleAddPrice = (index: number) => {
     setEditingIndex(index);
-    setWeight('');
-    setPrice('');
+    const item = scannedItems[index];
+    setWeight(item.weight || '');
+    setPrice(item.price || '');
     setShowPriceDialog(true);
   };
 
@@ -47,7 +48,7 @@ export default function HomeScreen() {
     }
     const pricePer100g = (p / w) * 100;
     setScannedItems(prev => prev.map((item, i) =>
-      i === editingIndex ? { ...item, pricePer100g } : item
+      i === editingIndex ? { ...item, pricePer100g, weight, price } : item
     ));
     setShowPriceDialog(false);
   };
@@ -304,7 +305,7 @@ Scan another item?`,
       <Modal visible={showPriceDialog} transparent animationType="fade">
         <KeyboardAvoidingView style={styles.modalOverlay} behavior="padding">
           <View style={styles.modalContent}>
-          <ThemedText type="subtitle" style={styles.modalTitle}>Add Price Information</ThemedText>
+          <ThemedText type="subtitle" style={styles.modalTitle}>{scannedItems[editingIndex]?.pricePer100g ? 'Edit' : 'Add'} Price Information</ThemedText>
           <ThemedText style={styles.label}>Net Weight (g):</ThemedText>
             <TextInput
               ref={weightInputRef}

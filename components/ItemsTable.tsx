@@ -138,9 +138,14 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
                   </View>
                   <View style={[styles.cell, { width: PRICE_WIDTH }]}>
                     {item.pricePer100g ? (
-                      <ThemedText style={styles.tableCell}>
-                        ${item.pricePer100g.toFixed(2)}
-                      </ThemedText>
+                      <TouchableOpacity
+                        style={styles.priceCell}
+                        onPress={onAddPrice ? () => onAddPrice(index) : undefined}
+                      >
+                        <ThemedText style={styles.tableCell}>
+                          ${item.pricePer100g.toFixed(2)}
+                        </ThemedText>
+                      </TouchableOpacity>
                     ) : (
                       <TouchableOpacity
                         style={styles.addButton}
@@ -285,6 +290,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#007AFF',
     fontWeight: 'bold',
+  },
+  priceCell: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tooltip: {
     position: 'absolute',

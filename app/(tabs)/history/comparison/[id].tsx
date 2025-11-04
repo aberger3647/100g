@@ -82,8 +82,11 @@ export default function ComparisonDetailScreen() {
 
   const handleAddPrice = (index: number) => {
     setEditingIndex(index);
-    setWeight('');
-    setPrice('');
+    if (comparison) {
+      const item = comparison.items[index];
+      setWeight(item.weight || '');
+      setPrice(item.price || '');
+    }
     setShowPriceDialog(true);
   };
 
@@ -98,7 +101,7 @@ export default function ComparisonDetailScreen() {
     const pricePer100g = (p / w) * 100;
     if (comparison && editingIndex !== null) {
       const newItems = [...comparison.items];
-      newItems[editingIndex] = { ...newItems[editingIndex], pricePer100g };
+      newItems[editingIndex] = { ...newItems[editingIndex], pricePer100g, weight, price };
       const updatedComparison = { ...comparison, items: newItems };
       setComparison(updatedComparison);
       // Update sortedItems
@@ -206,7 +209,7 @@ export default function ComparisonDetailScreen() {
       <Modal visible={showPriceDialog} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>Add Price Information</ThemedText>
+            <ThemedText type="subtitle" style={styles.modalTitle}>{comparison && editingIndex !== null && comparison.items[editingIndex]?.pricePer100g ? 'Edit' : 'Add'} Price Information</ThemedText>
             <ThemedText style={styles.label}>Net Weight (g):</ThemedText>
             <TextInput
               ref={weightInputRef}

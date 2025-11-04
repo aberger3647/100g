@@ -8,6 +8,8 @@ export interface Product {
     energy_kcal: number;
   };
   pricePer100g?: number;
+  weight?: string;
+  price?: string;
 }
 
 export interface Comparison {
