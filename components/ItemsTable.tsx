@@ -8,6 +8,7 @@ interface ItemsTableProps {
   items: Product[];
   onRemove?: (index: number) => void;
   onSort?: (key: 'carbs' | 'fat' | 'protein' | 'calories') => void;
+  onAddPrice?: (index: number) => void;
   currentSortKey?: 'carbs' | 'fat' | 'protein' | 'calories' | null;
   currentSortOrder?: 'asc' | 'desc';
 }
@@ -15,10 +16,11 @@ interface ItemsTableProps {
 const ITEM_WIDTH = 150;
 const NUTRITION_WIDTH = 75;
 const CALORIES_WIDTH = 95;
+const PRICE_WIDTH = 80;
 const DELETE_WIDTH = 40;
 const ROW_HEIGHT = 48;
 
-export default function ItemsTable({ items, onRemove, onSort, currentSortKey, currentSortOrder }: ItemsTableProps) {
+export default function ItemsTable({ items, onRemove, onSort, onAddPrice, currentSortKey, currentSortOrder }: ItemsTableProps) {
   const headerScrollRef = useRef<ScrollView>(null);
   const dataScrollRef = useRef<ScrollView>(null);
   const [tooltip, setTooltip] = useState<{ visible: boolean; text: string; x: number; y: number }>({ visible: false, text: '', x: 0, y: 0 });
@@ -62,6 +64,9 @@ export default function ItemsTable({ items, onRemove, onSort, currentSortKey, cu
                     Calories{currentSortKey === 'calories' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
                   </ThemedText>
                 </TouchableOpacity>
+                <View style={[styles.headerCell, { width: PRICE_WIDTH }]}>
+                  <ThemedText style={styles.tableHeaderText}>Price</ThemedText>
+                </View>
               </>
             ) : (
               <>
@@ -76,6 +81,9 @@ export default function ItemsTable({ items, onRemove, onSort, currentSortKey, cu
                 </View>
                 <View style={[styles.headerCell, { width: CALORIES_WIDTH }]}>
                   <ThemedText style={styles.tableHeaderText}>Calories</ThemedText>
+                </View>
+                <View style={[styles.headerCell, { width: PRICE_WIDTH }]}>
+                  <ThemedText style={styles.tableHeaderText}>Price</ThemedText>
                 </View>
               </>
             )}
@@ -127,6 +135,22 @@ export default function ItemsTable({ items, onRemove, onSort, currentSortKey, cu
                     <ThemedText style={styles.tableCell}>
                       {Math.floor(item.macros.energy_kcal)}
                     </ThemedText>
+                  </View>
+                  <View style={[styles.cell, { width: PRICE_WIDTH }]}>
+                    {item.pricePer100g ? (
+                      <ThemedText style={styles.tableCell}>
+                        ${item.pricePer100g.toFixed(2)}
+                      </ThemedText>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.addButton}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        activeOpacity={0.7}
+                        onPress={onAddPrice ? () => onAddPrice(index) : undefined}
+                      >
+                        <ThemedText style={styles.addText}>+</ThemedText>
+                      </TouchableOpacity>
+                    )}
                   </View>
                   <View style={[styles.cell, { width: DELETE_WIDTH }]}>
                     <TouchableOpacity
@@ -243,6 +267,24 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: 'lightgray',
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    backgroundColor: '#f9f9f9',
+  },
+  addButtonTouchable: {
+    hitSlop: { top: 10, bottom: 10, left: 10, right: 10 },
+  },
+  addText: {
+    fontSize: 18,
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
   tooltip: {
     position: 'absolute',

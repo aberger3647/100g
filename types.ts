@@ -7,6 +7,7 @@ export interface Product {
     fat: number;
     energy_kcal: number;
   };
+  pricePer100g?: number;
 }
 
 export interface Comparison {

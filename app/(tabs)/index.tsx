@@ -8,6 +8,10 @@ Alert,
 StyleSheet,
 TouchableOpacity,
 View,
+TextInput,
+Modal,
+Keyboard,
+KeyboardAvoidingView,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Product, Comparison } from '@/types';
@@ -17,8 +21,36 @@ export default function HomeScreen() {
   const [isScanning, setIsScanning] = useState(true);
   const [scannedItems, setScannedItems] = useState<Product[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showPriceDialog, setShowPriceDialog] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [weight, setWeight] = useState('');
+  const [price, setPrice] = useState('');
   const cameraRef = useRef<CameraView>(null);
   const isProcessing = useRef(false);
+  const weightInputRef = useRef<TextInput>(null);
+  const priceInputRef = useRef<TextInput>(null);
+
+  const handleAddPrice = (index: number) => {
+    setEditingIndex(index);
+    setWeight('');
+    setPrice('');
+    setShowPriceDialog(true);
+  };
+
+  const handleCalculatePrice = () => {
+    Keyboard.dismiss();
+    const w = parseFloat(weight);
+    const p = parseFloat(price);
+    if (isNaN(w) || isNaN(p) || w <= 0 || p <= 0) {
+      Alert.alert('Invalid Input', 'Please enter valid weight and price.');
+      return;
+    }
+    const pricePer100g = (p / w) * 100;
+    setScannedItems(prev => prev.map((item, i) =>
+      i === editingIndex ? { ...item, pricePer100g } : item
+    ));
+    setShowPriceDialog(false);
+  };
 
   const saveComparison = async (items: Product[]) => {
     console.log('saveComparison called with items:', items.length);
@@ -75,6 +107,12 @@ export default function HomeScreen() {
     getCameraPermissions();
     checkEditing();
   }, []);
+
+  useEffect(() => {
+    if (showPriceDialog) {
+      setTimeout(() => weightInputRef.current?.focus(), 100);
+    }
+  }, [showPriceDialog]);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     if (isProcessing.current) return;
@@ -202,6 +240,7 @@ Scan another item?`,
             <ItemsTable
               items={scannedItems}
               onRemove={(index) => setScannedItems((prev) => prev.filter((_, i) => i !== index))}
+              onAddPrice={handleAddPrice}
             />
           )}
           <View style={styles.buttonContainer}>
@@ -262,6 +301,47 @@ Scan another item?`,
           </View>
         </View>
       )}
+      <Modal visible={showPriceDialog} transparent animationType="fade">
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior="padding">
+          <View style={styles.modalContent}>
+            <ThemedText type="subtitle" style={styles.modalTitle}>Add Price Information</ThemedText>
+            <TouchableOpacity style={styles.disabledButton}>
+              <ThemedText style={styles.disabledText}>Take Photo (Disabled)</ThemedText>
+            </TouchableOpacity>
+            <ThemedText style={styles.orText}>OR</ThemedText>
+            <ThemedText style={styles.label}>Net Weight (g):</ThemedText>
+            <TextInput
+              ref={weightInputRef}
+              style={styles.input}
+              value={weight}
+              onChangeText={setWeight}
+              keyboardType="numeric"
+              placeholder="e.g. 500"
+              returnKeyType="next"
+              onSubmitEditing={() => priceInputRef.current?.focus()}
+            />
+            <ThemedText style={styles.label}>Price ($):</ThemedText>
+            <TextInput
+              ref={priceInputRef}
+              style={styles.input}
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="numeric"
+              placeholder="e.g. 3.99"
+              returnKeyType="next"
+              onSubmitEditing={handleCalculatePrice}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => { Keyboard.dismiss(); setShowPriceDialog(false); }}>
+                <ThemedText style={styles.modalButtonText}>Cancel</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.calculateButton]} onPress={handleCalculatePrice}>
+                <ThemedText style={[styles.modalButtonText, styles.calculateText]}>Calculate</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </ThemedView>
   );
 }
@@ -325,5 +405,72 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     textAlign: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  disabledButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  disabledText: {
+    color: '#ccc',
+  },
+  orText: {
+    textAlign: 'center',
+    marginVertical: 10,
+    fontWeight: 'bold',
+  },
+  label: {
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  modalButton: {
+    padding: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    flex: 1,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+  },
+  calculateButton: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  calculateText: {
+    color: 'white',
   },
 });
