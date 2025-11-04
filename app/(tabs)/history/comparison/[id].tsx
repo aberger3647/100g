@@ -28,6 +28,51 @@ export default function ComparisonDetailScreen() {
     }
   }, [comparison]);
 
+  const handleRemove = (index: number) => {
+    if (!comparison) return;
+    const newItems = comparison.items.filter((_, i) => i !== index);
+    const updatedComparison = { ...comparison, items: newItems };
+    setComparison(updatedComparison);
+    // Re-sort the new items
+    if (sortKey) {
+      const sorted = [...newItems].sort((a, b) => {
+        let aVal, bVal;
+        if (sortKey === 'carbs') {
+          aVal = a.macros.carbohydrates;
+          bVal = b.macros.carbohydrates;
+        } else if (sortKey === 'calories') {
+          aVal = a.macros.energy_kcal;
+          bVal = b.macros.energy_kcal;
+        } else {
+          aVal = a.macros[sortKey as 'fat' | 'protein'];
+          bVal = b.macros[sortKey as 'fat' | 'protein'];
+        }
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      });
+      setSortedItems(sorted);
+    } else {
+      setSortedItems([...newItems]);
+    }
+    // Save to storage
+    AsyncStorage.getItem('comparisons').then((stored) => {
+      if (stored) {
+        const history: Comparison[] = JSON.parse(stored);
+        const idx = history.findIndex(c => c.id === id);
+        if (idx !== -1) {
+          if (newItems.length === 0) {
+            // Remove the comparison if no items left
+            history.splice(idx, 1);
+            AsyncStorage.setItem('comparisons', JSON.stringify(history));
+            router.back(); // Navigate back since comparison is deleted
+          } else {
+            history[idx] = updatedComparison;
+            AsyncStorage.setItem('comparisons', JSON.stringify(history));
+          }
+        }
+      }
+    });
+  };
+
   const handleSort = (key: 'carbs' | 'fat' | 'protein' | 'calories') => {
     let order: 'asc' | 'desc' = 'asc';
     if (sortKey === key) {
@@ -87,13 +132,13 @@ export default function ComparisonDetailScreen() {
           <ThemedText style={styles.emptyText}>No items in this comparison</ThemedText>
         </ThemedView>
       ) : (
-        <ItemsTable items={sortedItems} onSort={handleSort} currentSortKey={sortKey} currentSortOrder={sortOrder} />
+        <ItemsTable items={sortedItems} onRemove={handleRemove} onSort={handleSort} currentSortKey={sortKey} currentSortOrder={sortOrder} />
       )}
       <TouchableOpacity style={styles.editButton} onPress={async () => {
         await AsyncStorage.setItem('editingComparisonId', id);
         router.push('/');
       }}>
-        <ThemedText style={styles.editButtonText}>Edit Comparison</ThemedText>
+        <ThemedText style={styles.editButtonText}>Scan Items</ThemedText>
       </TouchableOpacity>
     </ThemedView>
   );
