@@ -304,12 +304,8 @@ Scan another item?`,
       <Modal visible={showPriceDialog} transparent animationType="fade">
         <KeyboardAvoidingView style={styles.modalOverlay} behavior="padding">
           <View style={styles.modalContent}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>Add Price Information</ThemedText>
-            <TouchableOpacity style={styles.disabledButton}>
-              <ThemedText style={styles.disabledText}>Take Photo (Disabled)</ThemedText>
-            </TouchableOpacity>
-            <ThemedText style={styles.orText}>OR</ThemedText>
-            <ThemedText style={styles.label}>Net Weight (g):</ThemedText>
+          <ThemedText type="subtitle" style={styles.modalTitle}>Add Price Information</ThemedText>
+          <ThemedText style={styles.label}>Net Weight (g):</ThemedText>
             <TextInput
               ref={weightInputRef}
               style={styles.input}
@@ -322,16 +318,20 @@ Scan another item?`,
             />
             <ThemedText style={styles.label}>Price ($):</ThemedText>
             <TextInput
-              ref={priceInputRef}
-              style={styles.input}
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="numeric"
-              placeholder="e.g. 3.99"
-              returnKeyType="next"
-              onSubmitEditing={handleCalculatePrice}
+            ref={priceInputRef}
+            style={styles.input}
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="numeric"
+            placeholder="e.g. 3.99"
+            returnKeyType="done"
+            onSubmitEditing={Keyboard.dismiss}
             />
-            <View style={styles.modalButtons}>
+            <ThemedText style={styles.orText}>OR</ThemedText>
+              <TouchableOpacity style={styles.disabledButton}>
+                <ThemedText style={styles.disabledText}>Take Photo (Disabled)</ThemedText>
+              </TouchableOpacity>
+              <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.modalButton} onPress={() => { Keyboard.dismiss(); setShowPriceDialog(false); }}>
                 <ThemedText style={styles.modalButtonText}>Cancel</ThemedText>
               </TouchableOpacity>

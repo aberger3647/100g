@@ -19,6 +19,9 @@ export default function ComparisonDetailScreen() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [weight, setWeight] = useState('');
   const [price, setPrice] = useState('');
+  const [keyboardMargin, setKeyboardMargin] = useState(0);
+  const weightInputRef = useRef<TextInput>(null);
+  const priceInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     loadComparison();
@@ -204,29 +207,32 @@ export default function ComparisonDetailScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <ThemedText type="subtitle" style={styles.modalTitle}>Add Price Information</ThemedText>
-            <TouchableOpacity style={styles.disabledButton}>
-              <ThemedText style={styles.disabledText}>Take Photo (Disabled)</ThemedText>
-            </TouchableOpacity>
-            <ThemedText style={styles.orText}>OR</ThemedText>
             <ThemedText style={styles.label}>Net Weight (g):</ThemedText>
             <TextInput
+              ref={weightInputRef}
               style={styles.input}
               value={weight}
               onChangeText={setWeight}
               keyboardType="numeric"
               placeholder="e.g. 500"
               returnKeyType="next"
+              onSubmitEditing={() => priceInputRef.current?.focus()}
             />
             <ThemedText style={styles.label}>Price ($):</ThemedText>
             <TextInput
+              ref={priceInputRef}
               style={styles.input}
               value={price}
               onChangeText={setPrice}
               keyboardType="numeric"
               placeholder="e.g. 3.99"
               returnKeyType="done"
-              onSubmitEditing={() => Keyboard.dismiss()}
+              onSubmitEditing={Keyboard.dismiss}
             />
+            <ThemedText style={styles.orText}>OR</ThemedText>
+            <TouchableOpacity style={styles.disabledButton}>
+              <ThemedText style={styles.disabledText}>Take Photo (Disabled)</ThemedText>
+            </TouchableOpacity>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.modalButton} onPress={() => { Keyboard.dismiss(); setShowPriceDialog(false); }}>
                 <ThemedText style={styles.modalButtonText}>Cancel</ThemedText>
