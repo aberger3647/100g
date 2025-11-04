@@ -26,6 +26,12 @@ export default function PriceDialog({
   const weightInputRef = useRef<TextInput>(null);
   const priceInputRef = useRef<TextInput>(null);
   const modalBackground = useThemeColor({ light: '#ffffff', dark: '#1a1a1a' }, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const disabledButtonBg = useThemeColor({ light: '#f0f0f0', dark: '#555555' }, 'background');
+  const disabledTextColor = useThemeColor({ light: '#ccc', dark: '#cccccc' }, 'text');
+  const inputBg = useThemeColor({ light: '#ffffff', dark: '#333333' }, 'background');
+  const inputTextColor = useThemeColor({}, 'text');
+  const inputBorderColor = useThemeColor({ light: '#ccc', dark: '#666666' }, 'text');
 
   useEffect(() => {
     if (visible) {
@@ -42,31 +48,33 @@ export default function PriceDialog({
           <ThemedText type="subtitle" style={styles.modalTitle}>
             {isEditing ? 'Edit' : 'Add'} Price Information
           </ThemedText>
-          <ThemedText style={styles.label}>Net Weight (g):</ThemedText>
+          <ThemedText style={[styles.label, { color: textColor }]}>Net Weight (g):</ThemedText>
           <TextInput
             ref={weightInputRef}
-            style={styles.input}
+            style={[styles.input, { backgroundColor: inputBg, color: inputTextColor, borderColor: inputBorderColor }]}
             value={weight}
             onChangeText={setWeight}
             keyboardType="numeric"
             placeholder="e.g. 500"
+            placeholderTextColor={inputTextColor}
             returnKeyType="next"
             onSubmitEditing={() => priceInputRef.current?.focus()}
           />
-          <ThemedText style={styles.label}>Price ($):</ThemedText>
+          <ThemedText style={[styles.label, { color: textColor }]}>Price ($):</ThemedText>
           <TextInput
             ref={priceInputRef}
-            style={styles.input}
+            style={[styles.input, { backgroundColor: inputBg, color: inputTextColor, borderColor: inputBorderColor }]}
             value={price}
             onChangeText={setPrice}
             keyboardType="numeric"
             placeholder="e.g. 3.99"
+            placeholderTextColor={inputTextColor}
             returnKeyType="done"
             onSubmitEditing={Keyboard.dismiss}
           />
           <ThemedText style={styles.orText}>OR</ThemedText>
-          <TouchableOpacity style={styles.disabledButton}>
-            <ThemedText style={styles.disabledText}>Take Photo (Disabled)</ThemedText>
+          <TouchableOpacity style={[styles.disabledButton, { backgroundColor: disabledButtonBg }]}>
+            <ThemedText style={[styles.disabledText, { color: disabledTextColor }]}>Take Photo (Disabled)</ThemedText>
           </TouchableOpacity>
           <View style={styles.modalButtons}>
             <TouchableOpacity style={styles.modalButton} onPress={() => { Keyboard.dismiss(); onClose(); }}>
@@ -100,15 +108,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   disabledButton: {
-    backgroundColor: '#f0f0f0',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 10,
   },
-  disabledText: {
-    color: '#ccc',
-  },
+  disabledText: {},
   orText: {
     textAlign: 'center',
     marginVertical: 10,
@@ -120,7 +125,6 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 5,
     padding: 10,
     fontSize: 16,

@@ -274,14 +274,11 @@ const styles = StyleSheet.create({
     color: 'lightgray',
   },
   addButton: {
-    width: 40,
-    height: 40,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: 'transparent',
   },
   addButtonTouchable: {
     hitSlop: { top: 10, bottom: 10, left: 10, right: 10 },
