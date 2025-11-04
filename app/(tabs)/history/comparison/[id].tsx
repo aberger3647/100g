@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TouchableOpacity, Alert, Keyboard } from 'react-native';
+import { View, TouchableOpacity, Alert, Keyboard, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import PriceDialog from '@/components/PriceDialog';
-import { StyleSheet } from 'react-native';
+import { Camera, CameraView } from "expo-camera";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import ItemsTable from '@/components/ItemsTable';
 import { Product, Comparison } from '@/types';
@@ -21,9 +21,18 @@ export default function ComparisonDetailScreen() {
   const [weight, setWeight] = useState('');
   const [price, setPrice] = useState('');
   const [keyboardMargin, setKeyboardMargin] = useState(0);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const cameraRef = useRef<CameraView>(null);
+  const isProcessing = useRef(false);
 
   useEffect(() => {
     loadComparison();
+    const getCameraPermissions = async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    };
+    getCameraPermissions();
   }, [id]);
 
   useEffect(() => {
@@ -34,7 +43,76 @@ export default function ComparisonDetailScreen() {
     }
   }, [comparison]);
 
-
+  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    if (isProcessing.current || !comparison) return;
+    console.log("Barcode scanned:", data);
+    isProcessing.current = true;
+    if (comparison.items.some(item => item.barcode === data)) {
+      Alert.alert("Duplicate", "This item has already been scanned.", [{ text: "OK", onPress: () => { isProcessing.current = false; } }]);
+      return;
+    }
+    try {
+      console.log("Fetching data for barcode:", data);
+      const response = await fetch(
+        `https://world.openfoodfacts.org/api/v0/product/${data}.json`
+      );
+      console.log("Response status:", response.status);
+      const json = await response.json();
+      console.log("API response:", json);
+      if (json.status === 1) {
+        const product = json.product;
+        const nutriments = product.nutriments || {};
+        console.log('Nutriments:', nutriments);
+        const macros = {
+          protein: nutriments['proteins_100g'] || 0,
+          carbohydrates: nutriments['carbohydrates_100g'] || 0,
+          fat: nutriments['fat_100g'] || 0,
+          energy_kcal: nutriments['energy-kcal_100g'] || 0,
+        };
+        console.log("Macros:", macros);
+        const newItem: Product = {
+          barcode: data,
+          product_name: product.product_name || "Unknown",
+          macros,
+        };
+        const newItems = [...comparison.items, newItem];
+        const updatedComparison = { ...comparison, items: newItems };
+        setComparison(updatedComparison);
+        setSortedItems([...newItems]); // Update sortedItems
+        setSortKey(null);
+        setSortOrder('asc');
+        // Save to storage
+        const stored = await AsyncStorage.getItem('comparisons');
+        if (stored) {
+          const history: Comparison[] = JSON.parse(stored);
+          const idx = history.findIndex(c => c.id === id);
+          if (idx !== -1) {
+            history[idx] = updatedComparison;
+            await AsyncStorage.setItem('comparisons', JSON.stringify(history));
+          }
+        }
+        console.log("Item added:", newItem);
+        Alert.alert(
+          "Item Scanned",
+          `Scanned: ${product.product_name || 'Unknown'}\nScan another item?`,
+          [
+            { text: "No", onPress: () => { setIsScanning(false); isProcessing.current = false; } },
+            { text: "Yes", onPress: () => { isProcessing.current = false; }, style: "default" },
+          ]
+        );
+      } else {
+        console.log("Product not found");
+        Alert.alert(
+          "Product not found",
+          "Could not find product data for this barcode.",
+          [{ text: "OK", onPress: () => { isProcessing.current = false; } }]
+        );
+      }
+    } catch (error) {
+      console.log("Fetch error:", error);
+      Alert.alert("Error", "Failed to fetch product data.", [{ text: "OK", onPress: () => { isProcessing.current = false; } }]);
+    }
+  };
 
   const handleRemove = (index: number) => {
     if (!comparison) return;
@@ -200,22 +278,77 @@ export default function ComparisonDetailScreen() {
     );
   }
 
+  if (hasPermission === null) {
+    return (
+      <ThemedView style={styles.container}>
+        <ThemedText>Requesting camera permission...</ThemedText>
+      </ThemedView>
+    );
+  }
+  if (hasPermission === false) {
+    return (
+      <ThemedView style={styles.container}>
+        <ThemedText>No access to camera</ThemedText>
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>{new Date(comparison.date).toLocaleDateString() + ' ' + new Date(comparison.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</ThemedText>
-      {comparison.items.length === 0 ? (
-        <ThemedView style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyText}>No items in this comparison</ThemedText>
-        </ThemedView>
+      {isScanning ? (
+        <View style={styles.cameraContainer}>
+          <CameraView
+            ref={cameraRef}
+            onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
+            onCameraReady={() => {
+              console.log('Camera ready');
+              if (cameraRef.current) {
+                const features = cameraRef.current.getSupportedFeatures();
+                console.log('Supported features:', features);
+              }
+            }}
+            onMountError={(error) => console.log('Camera mount error:', error)}
+            barcodeScannerSettings={{
+              barcodeTypes: [
+                "aztec",
+                "codabar",
+                "code128",
+                "code39",
+                "code93",
+                "datamatrix",
+                "ean13",
+                "ean8",
+                "itf14",
+                "pdf417",
+                "upc_a",
+                "upc_e",
+                "qr",
+              ],
+            }}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setIsScanning(false)}
+          >
+            <ThemedText style={styles.backButtonText}>Back to Comparison</ThemedText>
+          </TouchableOpacity>
+        </View>
       ) : (
-        <ItemsTable items={sortedItems} onRemove={handleRemove} onSort={handleSort} onAddPrice={handleAddPrice} currentSortKey={sortKey} currentSortOrder={sortOrder} />
+        <>
+          <ThemedText type="title" style={styles.title}>{new Date(comparison.date).toLocaleDateString() + ' ' + new Date(comparison.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</ThemedText>
+          {comparison.items.length === 0 ? (
+            <ThemedView style={styles.emptyContainer}>
+              <ThemedText style={styles.emptyText}>No items in this comparison</ThemedText>
+            </ThemedView>
+          ) : (
+            <ItemsTable items={sortedItems} onRemove={handleRemove} onSort={handleSort} onAddPrice={handleAddPrice} currentSortKey={sortKey} currentSortOrder={sortOrder} />
+          )}
+          <TouchableOpacity style={styles.editButton} onPress={() => setIsScanning(true)}>
+            <ThemedText style={styles.editButtonText}>Add an Item</ThemedText>
+          </TouchableOpacity>
+        </>
       )}
-      <TouchableOpacity style={styles.editButton} onPress={async () => {
-        await AsyncStorage.setItem('editingComparisonId', id);
-        router.push('/');
-      }}>
-        <ThemedText style={styles.editButtonText}>Scan Items</ThemedText>
-      </TouchableOpacity>
       <PriceDialog
         visible={showPriceDialog}
         onClose={() => setShowPriceDialog(false)}
@@ -263,6 +396,21 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   editButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  cameraContainer: {
+    flex: 1,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 10,
+    borderRadius: 5,
+  },
+  backButtonText: {
     color: 'white',
     fontSize: 16,
   },
