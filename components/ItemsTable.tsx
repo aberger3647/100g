@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { TouchableOpacity, View, ScrollView, StyleSheet } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { TouchableOpacity, View, ScrollView, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Product } from '@/types';
@@ -21,6 +21,7 @@ const ROW_HEIGHT = 48;
 export default function ItemsTable({ items, onRemove, onSort, currentSortKey, currentSortOrder }: ItemsTableProps) {
   const headerScrollRef = useRef<ScrollView>(null);
   const dataScrollRef = useRef<ScrollView>(null);
+  const [tooltip, setTooltip] = useState<{ visible: boolean; text: string; x: number; y: number }>({ visible: false, text: '', x: 0, y: 0 });
 
   const tableBackground = useThemeColor({light: '#f9f9f9', dark: '#1a1a1a'}, 'background');
   const headerBackground = useThemeColor({light: '#e0e0e0', dark: '#2a2a2a'}, 'background');
@@ -89,9 +90,17 @@ export default function ItemsTable({ items, onRemove, onSort, currentSortKey, cu
           <View style={[styles.itemColumnContainer, { width: ITEM_WIDTH }]}>
             {items.map((item) => (
               <View key={item.barcode} style={[styles.itemCell, {borderBottomColor: borderColor}]}>
-                <ThemedText style={[styles.tableCell, styles.itemText]} numberOfLines={2}>
-                  {item.product_name}
-                </ThemedText>
+                <TouchableWithoutFeedback
+                  onLongPress={(event) => {
+                    const { pageX, pageY } = event.nativeEvent;
+                    setTooltip({ visible: true, text: item.product_name, x: pageX, y: pageY });
+                  }}
+                  onPressOut={() => setTooltip({ visible: false, text: '', x: 0, y: 0 })}
+                >
+                  <ThemedText style={[styles.tableCell, styles.itemText]} numberOfLines={2}>
+                    {item.product_name}
+                  </ThemedText>
+                </TouchableWithoutFeedback>
               </View>
             ))}
           </View>
@@ -134,6 +143,11 @@ export default function ItemsTable({ items, onRemove, onSort, currentSortKey, cu
           </ScrollView>
         </View>
       </ScrollView>
+      {tooltip.visible && (
+        <View style={[styles.tooltip, { left: tooltip.x - 50, top: tooltip.y - 60 }]}>
+          <ThemedText style={styles.tooltipText}>{tooltip.text}</ThemedText>
+        </View>
+      )}
     </View>
   );
 }
@@ -229,5 +243,17 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: 'lightgray',
+  },
+  tooltip: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: 8,
+    borderRadius: 4,
+    maxWidth: 200,
+    zIndex: 1000,
+  },
+  tooltipText: {
+    color: 'white',
+    fontSize: 14,
   },
 });
