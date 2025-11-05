@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { TouchableOpacity, View, ScrollView, StyleSheet, TouchableWithoutFeedback } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { TouchableOpacity, View, ScrollView, StyleSheet, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Product } from '@/types';
@@ -13,7 +13,6 @@ interface ItemsTableProps {
   currentSortOrder?: 'asc' | 'desc';
 }
 
-const ITEM_WIDTH = 150;
 const NUTRITION_WIDTH = 75;
 const CALORIES_WIDTH = 95;
 const PRICE_WIDTH = 80;
@@ -24,10 +23,20 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
   const headerScrollRef = useRef<ScrollView>(null);
   const dataScrollRef = useRef<ScrollView>(null);
   const [tooltip, setTooltip] = useState<{ visible: boolean; text: string; x: number; y: number }>({ visible: false, text: '', x: 0, y: 0 });
+  const [isLandscape, setIsLandscape] = useState(Dimensions.get('window').width > Dimensions.get('window').height);
 
   const tableBackground = useThemeColor({light: '#f9f9f9', dark: '#1a1a1a'}, 'background');
   const headerBackground = useThemeColor({light: '#e0e0e0', dark: '#2a2a2a'}, 'background');
   const borderColor = useThemeColor({light: '#e0e0e0', dark: '#2a2a2a'}, 'background');
+
+  const itemWidth = isLandscape ? 250 : 150;
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setIsLandscape(window.width > window.height);
+    });
+    return () => subscription?.remove();
+  }, []);
 
   const handleDataScroll = (event: any) => {
     const offset = event.nativeEvent.contentOffset.x;
@@ -35,9 +44,9 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
   };
 
   return (
-    <View style={[styles.tableContainer, {backgroundColor: tableBackground}]}>
+    <View style={[styles.tableContainer, {backgroundColor: tableBackground, marginHorizontal: isLandscape ? 40 : 10}]}>
       <View style={[styles.headerRow, {backgroundColor: headerBackground}]}>
-        <View style={[styles.headerCell, { width: ITEM_WIDTH }]}>
+        <View style={[styles.headerCell, { width: itemWidth }]}>
           <ThemedText style={[styles.tableHeaderText, styles.leftAlign, {paddingLeft: 10}]}>Item</ThemedText>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollableHeader} ref={headerScrollRef}>
@@ -87,15 +96,15 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
                 </View>
               </>
             )}
-            <View style={[styles.headerCell, { width: DELETE_WIDTH }]}>
-              <ThemedText style={styles.tableHeaderText}></ThemedText>
-            </View>
           </View>
         </ScrollView>
+        <View style={[styles.headerCell, { width: DELETE_WIDTH }]}>
+          <ThemedText style={styles.tableHeaderText}></ThemedText>
+        </View>
       </View>
       <ScrollView vertical showsVerticalScrollIndicator={true} style={styles.dataScrollContainer}>
         <View style={styles.dataContainer}>
-          <View style={[styles.itemColumnContainer, { width: ITEM_WIDTH }]}>
+          <View style={[styles.itemColumnContainer, { width: itemWidth }]}>
             {items.map((item) => (
               <View key={item.barcode} style={[styles.itemCell, {borderBottomColor: borderColor}]}>
                 <TouchableWithoutFeedback
@@ -157,19 +166,23 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
                       </TouchableOpacity>
                     )}
                   </View>
-                  <View style={[styles.cell, { width: DELETE_WIDTH }]}>
-                    <TouchableOpacity
-                      style={[styles.deleteButton, !onRemove && styles.disabledButton]}
-                      onPress={onRemove ? () => onRemove(index) : undefined}
-                      disabled={!onRemove}
-                    >
-                      <ThemedText style={[styles.deleteText, !onRemove && styles.disabledText]}>×</ThemedText>
-                    </TouchableOpacity>
-                  </View>
                 </View>
               ))}
             </View>
           </ScrollView>
+          <View style={[styles.deleteColumnContainer, { width: DELETE_WIDTH }]}>
+            {items.map((item, index) => (
+              <View key={item.barcode} style={[styles.deleteCell, {borderBottomColor: borderColor}]}>
+                <TouchableOpacity
+                  style={[styles.deleteButton, !onRemove && styles.disabledButton]}
+                  onPress={onRemove ? () => onRemove(index) : undefined}
+                  disabled={!onRemove}
+                >
+                  <ThemedText style={[styles.deleteText, !onRemove && styles.disabledText]}>×</ThemedText>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
       {tooltip.visible && (
@@ -185,7 +198,6 @@ const styles = StyleSheet.create({
   tableContainer: {
     flex: 1,
     borderRadius: 5,
-    marginHorizontal: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -222,11 +234,22 @@ const styles = StyleSheet.create({
   itemColumnContainer: {
     flexDirection: 'column',
   },
+  deleteColumnContainer: {
+    flexDirection: 'column',
+  },
   itemCell: {
     height: ROW_HEIGHT,
     paddingVertical: 12,
     paddingHorizontal: 5,
     justifyContent: 'center',
+    borderBottomWidth: 1,
+  },
+  deleteCell: {
+    height: ROW_HEIGHT,
+    paddingVertical: 12,
+    paddingHorizontal: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderBottomWidth: 1,
   },
   itemText: {

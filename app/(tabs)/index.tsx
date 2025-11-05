@@ -193,33 +193,34 @@ Scan another item?`,
       {isScanning ? (
         <View style={styles.cameraContainer}>
           <CameraView
-            ref={cameraRef}
-            onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
-            onCameraReady={() => {
-              console.log('Camera ready');
-              if (cameraRef.current) {
-                const features = cameraRef.current.getSupportedFeatures();
-                console.log('Supported features:', features);
-              }
-            }}
-            onMountError={(error) => console.log('Camera mount error:', error)}
-            barcodeScannerSettings={{
-              barcodeTypes: [
-                "aztec",
-                "codabar",
-                "code128",
-                "code39",
-                "code93",
-                "datamatrix",
-                "ean13",
-                "ean8",
-                "itf14",
-                "pdf417",
-                "upc_a",
-                "upc_e",
-                "qr",
-              ],
-            }}
+          ref={cameraRef}
+          onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
+          onCameraReady={() => {
+          console.log('Camera ready');
+          if (cameraRef.current) {
+          const features = cameraRef.current.getSupportedFeatures();
+          console.log('Supported features:', features);
+          }
+          }}
+          onMountError={(error) => console.log('Camera mount error:', error)}
+          barcodeScannerSettings={{
+          barcodeTypes: [
+          "aztec",
+          "codabar",
+          "code128",
+          "code39",
+          "code93",
+          "datamatrix",
+          "ean13",
+          "ean8",
+          "itf14",
+          "pdf417",
+          "upc_a",
+          "upc_e",
+          "qr",
+          ],
+          }}
+          responsiveOrientation={true}
             style={StyleSheet.absoluteFillObject}
           />
           <TouchableOpacity
