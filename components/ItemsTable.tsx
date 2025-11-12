@@ -190,7 +190,7 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
                         style={styles.priceCell}
                         onPress={onAddPrice ? () => onAddPrice(index) : undefined}
                       >
-                        <ThemedText style={styles.tableCell}>
+                        <ThemedText style={[styles.tableCell, { textAlign: 'center' }]}>
                           ${item.pricePer100g.toFixed(2)}
                         </ThemedText>
                       </TouchableOpacity>
@@ -278,14 +278,13 @@ const styles = StyleSheet.create({
   },
   itemCell: {
     height: ROW_HEIGHT,
-    paddingVertical: 12,
     paddingHorizontal: 5,
     justifyContent: 'center',
+    alignItems: 'flex-start',
     borderBottomWidth: 1,
   },
   deleteCell: {
     height: ROW_HEIGHT,
-    paddingVertical: 12,
     paddingHorizontal: 5,
     justifyContent: 'center',
     alignItems: 'center',
@@ -306,21 +305,23 @@ const styles = StyleSheet.create({
     height: ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     borderBottomWidth: 1,
   },
   cell: {
-    paddingVertical: 12,
+    height: ROW_HEIGHT,
     paddingHorizontal: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tableCell: {
     fontSize: 14,
-    textAlign: 'right',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   deleteButton: {
     width: 30,
-    height: 30,
+    height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -331,13 +332,15 @@ const styles = StyleSheet.create({
     color: 'gray',
     fontSize: 18,
     fontWeight: 'bold',
+    lineHeight: 20,
+    textAlign: 'center',
   },
   disabledText: {
     color: 'lightgray',
   },
   addButton: {
-    width: 20,
-    height: 20,
+    width: PRICE_WIDTH,
+    height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
@@ -349,9 +352,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#007AFF',
     fontWeight: 'bold',
+    lineHeight: 20,
+    textAlign: 'center',
   },
   priceCell: {
-    flex: 1,
+    width: PRICE_WIDTH,
+    height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
   },
