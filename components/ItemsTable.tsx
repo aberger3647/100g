@@ -54,8 +54,8 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
           showsHorizontalScrollIndicator={false} 
           style={styles.scrollableHeader} 
           ref={headerScrollRef}
-          scrollEnabled={true}
-          nestedScrollEnabled={true}
+          scrollEnabled={false}
+          nestedScrollEnabled={false}
         >
           <View style={styles.scrollableContent}>
             {onSort ? (
