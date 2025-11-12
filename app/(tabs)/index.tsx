@@ -18,6 +18,9 @@ export default function HomeScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(true);
   const [scannedItems, setScannedItems] = useState<Product[]>([]);
+  const [sortedItems, setSortedItems] = useState<Product[]>([]);
+  const [sortKey, setSortKey] = useState<'carbs' | 'fat' | 'protein' | 'calories' | 'price' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -28,7 +31,7 @@ export default function HomeScreen() {
 
   const handleAddPrice = (index: number) => {
     setEditingIndex(index);
-    const item = scannedItems[index];
+    const item = sortedItems[index];
     if (item.pricePer100g && !item.weight) {
       setWeight('100');
       setPrice(item.pricePer100g.toFixed(2));
@@ -37,6 +40,24 @@ export default function HomeScreen() {
       setPrice(item.price || '');
     }
     setShowPriceDialog(true);
+  };
+
+  const handleSort = (key: 'carbs' | 'fat' | 'protein' | 'calories' | 'price') => {
+    let order: 'asc' | 'desc' = 'asc';
+    if (sortKey === key) {
+      order = sortOrder === 'asc' ? 'desc' : 'asc';
+    }
+    setSortKey(key);
+    setSortOrder(order);
+    // The useEffect will handle the sorting automatically
+  };
+
+  const handleRemove = (index: number) => {
+    // Find the item by barcode from sortedItems since index is from sorted array
+    const itemToRemove = sortedItems[index];
+    const newItems = scannedItems.filter(item => item.barcode !== itemToRemove.barcode);
+    setScannedItems(newItems);
+    // The useEffect will handle re-sorting automatically
   };
 
   const handleCalculatePrice = (w: string, p: string) => {
@@ -48,9 +69,15 @@ export default function HomeScreen() {
       return;
     }
     const pricePer100g = (priceNum / weightNum) * 100;
-    setScannedItems(prev => prev.map((item, i) =>
-      i === editingIndex ? { ...item, pricePer100g, weight: w, price: p } : item
-    ));
+    // Find the actual item in scannedItems by barcode since editingIndex is from sortedItems
+    const itemToUpdate = sortedItems[editingIndex!];
+    const actualIndex = scannedItems.findIndex(item => item.barcode === itemToUpdate.barcode);
+    if (actualIndex !== -1) {
+      const newItems = [...scannedItems];
+      newItems[actualIndex] = { ...newItems[actualIndex], pricePer100g, weight: w, price: p };
+      setScannedItems(newItems);
+      // The useEffect will handle re-sorting
+    }
     setWeight(w);
     setPrice(p);
     setShowPriceDialog(false);
@@ -100,6 +127,9 @@ export default function HomeScreen() {
           const comp = history.find(c => c.id === editingIdStored);
           if (comp) {
             setScannedItems(comp.items);
+            // Reset sort when loading items
+            setSortKey(null);
+            setSortOrder('asc');
             setEditingId(editingIdStored);
             setIsScanning(false);
           }
@@ -111,6 +141,33 @@ export default function HomeScreen() {
     getCameraPermissions();
     checkEditing();
   }, []);
+
+  useEffect(() => {
+    // Update sortedItems when scannedItems changes
+    if (sortKey) {
+      const sorted = [...scannedItems].sort((a, b) => {
+        let aVal, bVal;
+        if (sortKey === 'carbs') {
+          aVal = a.macros.carbohydrates;
+          bVal = b.macros.carbohydrates;
+        } else if (sortKey === 'calories') {
+          aVal = a.macros.energy_kcal;
+          bVal = b.macros.energy_kcal;
+        } else if (sortKey === 'price') {
+          // Handle items without price - treat as Infinity to put them at the end
+          aVal = a.pricePer100g ?? (sortOrder === 'asc' ? Infinity : -Infinity);
+          bVal = b.pricePer100g ?? (sortOrder === 'asc' ? Infinity : -Infinity);
+        } else {
+          aVal = a.macros[sortKey as 'fat' | 'protein'];
+          bVal = b.macros[sortKey as 'fat' | 'protein'];
+        }
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      });
+      setSortedItems(sorted);
+    } else {
+      setSortedItems([...scannedItems]);
+    }
+  }, [scannedItems, sortKey, sortOrder]);
 
 
 
@@ -147,6 +204,9 @@ export default function HomeScreen() {
           macros,
         };
         setScannedItems((prev) => [...prev, newItem]);
+        // Reset sort when adding new item
+        setSortKey(null);
+        setSortOrder('asc');
         console.log("Item added:", newItem);
         Alert.alert(
         "Item Scanned",
@@ -239,9 +299,12 @@ Scan another item?`,
             </ThemedView>
           ) : (
             <ItemsTable
-              items={scannedItems}
-              onRemove={(index) => setScannedItems((prev) => prev.filter((_, i) => i !== index))}
+              items={sortedItems}
+              onRemove={handleRemove}
+              onSort={handleSort}
               onAddPrice={handleAddPrice}
+              currentSortKey={sortKey}
+              currentSortOrder={sortOrder}
             />
           )}
           <View style={styles.buttonContainer}>

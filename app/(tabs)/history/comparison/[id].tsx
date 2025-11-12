@@ -14,7 +14,7 @@ export default function ComparisonDetailScreen() {
   const router = useRouter();
   const [comparison, setComparison] = useState<Comparison | null>(null);
   const [sortedItems, setSortedItems] = useState<Product[]>([]);
-  const [sortKey, setSortKey] = useState<'carbs' | 'fat' | 'protein' | 'calories' | null>(null);
+  const [sortKey, setSortKey] = useState<'carbs' | 'fat' | 'protein' | 'calories' | 'price' | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showPriceDialog, setShowPriceDialog] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -116,7 +116,9 @@ export default function ComparisonDetailScreen() {
 
   const handleRemove = (index: number) => {
     if (!comparison) return;
-    const newItems = comparison.items.filter((_, i) => i !== index);
+    // Find the item by barcode from sortedItems since index is from sorted array
+    const itemToRemove = sortedItems[index];
+    const newItems = comparison.items.filter(item => item.barcode !== itemToRemove.barcode);
     const updatedComparison = { ...comparison, items: newItems };
     setComparison(updatedComparison);
     // Re-sort the new items
@@ -129,6 +131,10 @@ export default function ComparisonDetailScreen() {
         } else if (sortKey === 'calories') {
           aVal = a.macros.energy_kcal;
           bVal = b.macros.energy_kcal;
+        } else if (sortKey === 'price') {
+          // Handle items without price - treat as Infinity to put them at the end
+          aVal = a.pricePer100g ?? (sortOrder === 'asc' ? Infinity : -Infinity);
+          bVal = b.pricePer100g ?? (sortOrder === 'asc' ? Infinity : -Infinity);
         } else {
           aVal = a.macros[sortKey as 'fat' | 'protein'];
           bVal = b.macros[sortKey as 'fat' | 'protein'];
@@ -201,6 +207,10 @@ export default function ComparisonDetailScreen() {
             } else if (sortKey === 'calories') {
               aVal = a.macros.energy_kcal;
               bVal = b.macros.energy_kcal;
+            } else if (sortKey === 'price') {
+              // Handle items without price - treat as Infinity to put them at the end
+              aVal = a.pricePer100g ?? (sortOrder === 'asc' ? Infinity : -Infinity);
+              bVal = b.pricePer100g ?? (sortOrder === 'asc' ? Infinity : -Infinity);
             } else {
               aVal = a.macros[sortKey as 'fat' | 'protein'];
               bVal = b.macros[sortKey as 'fat' | 'protein'];
@@ -227,7 +237,7 @@ export default function ComparisonDetailScreen() {
     setShowPriceDialog(false);
   };
 
-  const handleSort = (key: 'carbs' | 'fat' | 'protein' | 'calories') => {
+  const handleSort = (key: 'carbs' | 'fat' | 'protein' | 'calories' | 'price') => {
     let order: 'asc' | 'desc' = 'asc';
     if (sortKey === key) {
       order = sortOrder === 'asc' ? 'desc' : 'asc';
@@ -243,6 +253,10 @@ export default function ComparisonDetailScreen() {
       } else if (key === 'calories') {
         aVal = a.macros.energy_kcal;
         bVal = b.macros.energy_kcal;
+      } else if (key === 'price') {
+        // Handle items without price - treat as Infinity to put them at the end
+        aVal = a.pricePer100g ?? (order === 'asc' ? Infinity : -Infinity);
+        bVal = b.pricePer100g ?? (order === 'asc' ? Infinity : -Infinity);
       } else {
         aVal = a.macros[key as 'fat' | 'protein'];
         bVal = b.macros[key as 'fat' | 'protein'];

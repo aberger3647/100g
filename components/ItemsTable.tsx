@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { TouchableOpacity, View, ScrollView, StyleSheet, TouchableWithoutFeedback, Dimensions } from 'react-native';
+import { TouchableOpacity, View, ScrollView, StyleSheet, TouchableWithoutFeedback, Dimensions, Pressable } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Product } from '@/types';
@@ -7,9 +7,9 @@ import { Product } from '@/types';
 interface ItemsTableProps {
   items: Product[];
   onRemove?: (index: number) => void;
-  onSort?: (key: 'carbs' | 'fat' | 'protein' | 'calories') => void;
+  onSort?: (key: 'carbs' | 'fat' | 'protein' | 'calories' | 'price') => void;
   onAddPrice?: (index: number) => void;
-  currentSortKey?: 'carbs' | 'fat' | 'protein' | 'calories' | null;
+  currentSortKey?: 'carbs' | 'fat' | 'protein' | 'calories' | 'price' | null;
   currentSortOrder?: 'asc' | 'desc';
 }
 
@@ -49,33 +49,72 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
         <View style={[styles.headerCell, { width: itemWidth }]}>
           <ThemedText style={[styles.tableHeaderText, styles.leftAlign, {paddingLeft: 10}]}>Item</ThemedText>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollableHeader} ref={headerScrollRef}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.scrollableHeader} 
+          ref={headerScrollRef}
+          scrollEnabled={true}
+          nestedScrollEnabled={true}
+        >
           <View style={styles.scrollableContent}>
             {onSort ? (
               <>
-                <TouchableOpacity style={[styles.headerCell, { width: NUTRITION_WIDTH }]} onPress={() => onSort?.('carbs')}>
+                <TouchableOpacity 
+                  style={[styles.headerCell, { width: NUTRITION_WIDTH }]} 
+                  onPress={() => onSort?.('carbs')}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                  delayPressIn={0}
+                >
                   <ThemedText style={styles.tableHeaderText}>
                     Carbs{currentSortKey === 'carbs' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
                   </ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.headerCell, { width: NUTRITION_WIDTH }]} onPress={() => onSort?.('fat')}>
+                <TouchableOpacity 
+                  style={[styles.headerCell, { width: NUTRITION_WIDTH }]} 
+                  onPress={() => onSort?.('fat')}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                  delayPressIn={0}
+                >
                   <ThemedText style={styles.tableHeaderText}>
                     Fat{currentSortKey === 'fat' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
                   </ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.headerCell, { width: NUTRITION_WIDTH }]} onPress={() => onSort?.('protein')}>
+                <TouchableOpacity 
+                  style={[styles.headerCell, { width: NUTRITION_WIDTH }]} 
+                  onPress={() => onSort?.('protein')}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                  delayPressIn={0}
+                >
                   <ThemedText style={styles.tableHeaderText}>
                     Protein{currentSortKey === 'protein' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
                   </ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.headerCell, { width: CALORIES_WIDTH }]} onPress={() => onSort?.('calories')}>
+                <TouchableOpacity 
+                  style={[styles.headerCell, { width: CALORIES_WIDTH }]} 
+                  onPress={() => onSort?.('calories')}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                  delayPressIn={0}
+                >
                   <ThemedText style={styles.tableHeaderText}>
                     Calories{currentSortKey === 'calories' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
                   </ThemedText>
                 </TouchableOpacity>
-                <View style={[styles.headerCell, { width: PRICE_WIDTH }]}>
-                  <ThemedText style={styles.tableHeaderText}>Price</ThemedText>
-                </View>
+                <TouchableOpacity 
+                  style={[styles.headerCell, { width: PRICE_WIDTH }]} 
+                  onPress={() => onSort?.('price')}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                  delayPressIn={0}
+                >
+                  <ThemedText style={styles.tableHeaderText}>
+                    Price{currentSortKey === 'price' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}
+                  </ThemedText>
+                </TouchableOpacity>
               </>
             ) : (
               <>
