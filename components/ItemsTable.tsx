@@ -153,7 +153,7 @@ export default function ItemsTable({ items, onRemove, onSort, onAddPrice, curren
                   }}
                   onPressOut={() => setTooltip({ visible: false, text: '', x: 0, y: 0 })}
                 >
-                  <ThemedText style={[styles.tableCell, styles.itemText]} numberOfLines={2}>
+                  <ThemedText style={[styles.tableCell, styles.itemText]} numberOfLines={1} ellipsizeMode='tail'>
                     {item.product_name}
                   </ThemedText>
                 </TouchableWithoutFeedback>
@@ -291,9 +291,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   itemText: {
-    flex: 1,
     textAlign: 'left',
     paddingLeft: 10,
+    height: 20,
   },
   scrollableData: {
     flex: 1,
